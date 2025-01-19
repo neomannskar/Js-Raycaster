@@ -1,10 +1,15 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
-
+const express = require("express");
 const app = express();
-const server = http.createServer(app);
-const io = socketIo(server);
+const http = require("http").createServer(app);
+const io = require("socket.io")(http);
+
+const PORT = 3000;
+
+app.use(express.static("public")); // Serve static files
+
+http.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running at http://0.0.0.0:${PORT}`);
+});
 
 let players = [];
 
@@ -43,6 +48,6 @@ io.on('connection', (socket) => {
 });
 
 app.use(express.static('public'));
-server.listen(3000, () => {
+http.listen(3000, () => {
   console.log('Server running on port 3000');
 });
