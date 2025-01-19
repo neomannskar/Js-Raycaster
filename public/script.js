@@ -11,18 +11,26 @@ map.height = 512;
 game.width = 512;
 game.height = 512;
 
-// Level setup
-const levelX = 8, levelY = 8, cellSize = 64;
-const level = [
-  1, 1, 1, 1, 1, 1, 1, 1,
-  1, 0, 1, 0, 0, 0, 0, 1,
-  1, 0, 1, 0, 1, 0, 0, 1,
-  1, 0, 1, 0, 0, 0, 0, 1,
-  1, 0, 0, 0, 0, 1, 1, 1,
-  1, 0, 0, 0, 0, 1, 0, 1,
-  1, 0, 0, 0, 0, 0, 0, 1,
-  1, 1, 1, 1, 1, 1, 1, 1
-];
+// Dynamic level size setup
+let levelX = 64, levelY = 64; // Default level size (could be 8, 16, 24, 7, etc.)
+let cellSize = 8; // Default cell size
+let level = [];
+
+// Function to generate a random level with walls (1 = wall, 0 = empty space)
+function generateLevel(levelX, levelY) {
+  level = [];
+  for (let y = 0; y < levelY; y++) {
+    for (let x = 0; x < levelX; x++) {
+      if (x === 0 || y === 0 || x === levelX - 1 || y === levelY - 1) {
+        level.push(1); // Set outer borders as walls
+      } else {
+        level.push(Math.random() > 0.2 ? 0 : 1); // Random walls with 20% chance
+      }
+    }
+  }
+}
+
+generateLevel(levelX, levelY);
 
 // Player setup
 const player = {
@@ -37,9 +45,121 @@ const PI = Math.PI;
 
 let players = [];
 
+const weaponImage = new Image();
+weaponImage.src = 'media/stupid gun.png'; // Replace with the actual path to the image
+// On image load event
+weaponImage.onload = function() {
+  console.log('Weapon image loaded successfully!');
+  // You can now render it in your main game loop
+};
+
+// Handle error loading the image
+weaponImage.onerror = function(err) {
+  console.error('Failed to load the image:', err);
+  // You could provide a fallback image or handle the error accordingly
+  weaponImage.src = 'fallback_image.png'; // Optional fallback
+};
+
+const weaponBangImage = new Image();
+weaponBangImage.src = 'media/bang.png'; // Replace with the actual path to the image
+// On image load event
+weaponBangImage.onload = function() {
+  console.log('Weapon image loaded successfully!');
+  // You can now render it in your main game loop
+};
+
+// Handle error loading the image
+weaponImage.onerror = function(err) {
+  console.error('Failed to load the image:', err);
+  // You could provide a fallback image or handle the error accordingly
+  weaponImage.src = 'fallback_image.png'; // Optional fallback
+};
+
+// Function to render the weapon image as a pixelated overlay
+function renderWeaponOverlay() {
+  // Set image smoothing to false to achieve the pixelated effect
+  game_ctx.imageSmoothingEnabled = false;
+
+  // Define the position where the weapon should be drawn (this can be player-based or fixed)
+  const weaponSize = game.width / 1.5; // Adjust the size of the weapon image
+  const weaponX = game.width - weaponSize; // Adjust as needed to position it relative to player
+  const weaponY = game.height - weaponSize; // Adjust as needed to position it relative to player
+  
+  // Draw the weapon image onto the canvas
+  game_ctx.drawImage(weaponImage, weaponX, weaponY, weaponSize, weaponSize);
+  
+  // Reset image smoothing to true after rendering
+  game_ctx.imageSmoothingEnabled = true;
+}
+
+function renderWeaponBangOverlay() {
+  // Set image smoothing to false to achieve the pixelated effect
+  game_ctx.imageSmoothingEnabled = false;
+
+  // Define the position where the weapon should be drawn (this can be player-based or fixed)
+  const weaponSize = game.width / 4; // Adjust the size of the weapon image
+  const weaponX = game.width - weaponSize - 80; // Adjust as needed to position it relative to player
+  const weaponY = game.height - weaponSize * 2.7; // Adjust as needed to position it relative to player
+  
+  // Draw the weapon image onto the canvas 
+  game_ctx.drawImage(weaponBangImage, weaponX, weaponY, weaponSize, weaponSize);
+  
+  // Reset image smoothing to true after rendering
+  game_ctx.imageSmoothingEnabled = true;
+}
+
+function renderRaysOnMap() {
+  const numRays = 150;
+  const fov = Math.PI / 2;
+  const rayStep = fov / numRays;
+  const maxDepth = 700;
+
+  // Clear the map canvas (optional, you can choose to keep the map background intact)
+  map_ctx.clearRect(0, 0, map.width, map.height);
+
+  for (let i = 0; i < numRays; i++) {
+    const rayAngle = player.angle - fov / 2 + i * rayStep;
+    let rayX = player.x;
+    let rayY = player.y;
+
+    // Variable to store the ray's end point
+    let hitX = -1;
+    let hitY = -1;
+
+    for (let depth = 0; depth < maxDepth; depth++) {
+      rayX += Math.cos(rayAngle);
+      rayY += Math.sin(rayAngle);
+
+      const mapX = Math.floor(rayX / cellSize);
+      const mapY = Math.floor(rayY / cellSize);
+
+      if (mapX >= 0 && mapX < levelX && mapY >= 0 && mapY < levelY) {
+        if (level[mapY * levelX + mapX] === 1) {
+          // Store the hit position for ray visualization
+          hitX = rayX;
+          hitY = rayY;
+          break; // Stop tracing the ray when it hits a wall
+        }
+      }
+    }
+
+    // If the ray hit something, draw it in orange
+    if (hitX !== -1 && hitY !== -1) {
+      map_ctx.beginPath();
+      map_ctx.moveTo(player.x, player.y);
+      map_ctx.lineTo(hitX, hitY);
+      map_ctx.strokeStyle = "orange"; // Set ray color to orange
+      map_ctx.lineWidth = 2; // Make the line thicker
+      map_ctx.stroke();
+    }
+  }
+}
+
 function drawLevel() {
   map_ctx.fillStyle = "black";
   map_ctx.fillRect(0, 0, map.width, map.height);
+
+  renderRaysOnMap();
 
   for (let y = 0; y < levelY; y++) {
     for (let x = 0; x < levelX; x++) {
@@ -73,10 +193,10 @@ function drawSpritesOnMap() {
 }
 
 function render3DView() {
-  const numRays = 150;
+  const numRays = 200;
   const fov = Math.PI / 2;
   const rayStep = fov / numRays;
-  const maxDepth = 700;
+  const maxDepth = 500;
 
   game_ctx.clearRect(0, 0, game.width, game.height);
 
@@ -180,8 +300,13 @@ socket.on('playersUpdate', (updatedPlayers) => {
 
 // Player input handling
 const keys = {};
-window.addEventListener("keydown", (e) => (keys[e.key] = true));
-window.addEventListener("keyup", (e) => (keys[e.key] = false));
+window.addEventListener("keydown", (e) => {
+  keys[e.key] = true;
+});
+
+window.addEventListener("keyup", (e) => {
+  keys[e.key] = false;
+});
 
 // Update player position based on input keys
 function updatePlayer() {
@@ -206,7 +331,7 @@ function renderPlayers() {
   players.forEach((player) => {
     map_ctx.fillStyle = "yellow"; // Color for the player
     map_ctx.beginPath();
-    map_ctx.arc(player.x, player.y, 5, 0, 2 * Math.PI);
+    map_ctx.arc(player.x, player.y, 3, 0, 2 * Math.PI);
     map_ctx.fill();
   });
 }
@@ -273,15 +398,22 @@ function renderPlayerBillboards() {
 function gameLoop() {
   updatePlayer(); // Update the player based on input
   updatePlayerPosition(); // Send the updated position to the server
-
+  
   // Render the game elements
   drawLevel();
   drawPlayer();
+  
   render3DView();
   drawSpritesOnMap();
   renderBillboards();
   renderPlayers(); // Draw all players on the game canvas
   renderPlayerBillboards();
+  
+  if (keys[" "]) {
+    renderWeaponBangOverlay();
+  }
+  
+  renderWeaponOverlay();
 
   requestAnimationFrame(gameLoop);
 }
