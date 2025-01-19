@@ -12,8 +12,8 @@ game.width = 512;
 game.height = 512;
 
 // Dynamic level size setup
-let levelX = 64, levelY = 64; // Default level size (could be 8, 16, 24, 7, etc.)
-let cellSize = 8; // Default cell size
+let levelX = 8, levelY = 8; // Default level size (could be 8, 16, 24, 7, etc.)
+let cellSize = 64; // Default cell size
 let level = [];
 
 // Function to generate a random level with walls (1 = wall, 0 = empty space)
@@ -37,8 +37,8 @@ const player = {
   x: 100,
   y: 100,
   angle: Math.PI / 2.5,
-  speed: 0.75,
-  turnSpeed: 0.01
+  speed: 0.5,
+  turnSpeed: 0.03
 };
 
 const PI = Math.PI;
@@ -344,8 +344,8 @@ function renderPlayerBillboards() {
   });
 
   sortedPlayers.forEach((p, index) => {
-    const dx = p.x - player.x;
-    const dy = p.y - player.y;
+    const dx = p.x - player.x - 1;
+    const dy = p.y - player.y - 1;
 
     const distance = Math.sqrt(dx * dx + dy * dy);
     const angleToPlayer = Math.atan2(dy, dx);
