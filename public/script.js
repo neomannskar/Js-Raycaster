@@ -12,8 +12,8 @@ game.width = 512;
 game.height = 512;
 
 // Dynamic level size setup
-let levelX = 8, levelY = 8; // Default level size (could be 8, 16, 24, 7, etc.)
-let cellSize = 64; // Default cell size
+let levelX = 32, levelY = 32; // Default level size (could be 8, 16, 24, 7, etc.)
+let cellSize = 16; // Default cell size
 let level = [];
 
 // Function to generate a random level with walls (1 = wall, 0 = empty space)
@@ -217,14 +217,14 @@ function render3DView() {
           const distance = Math.hypot(rayX - player.x, rayY - player.y);
           const wallHeight = (cellSize / distance) * (game.height / 2);
 
-          game_ctx.fillStyle = "rgb(20, 50, 0)";
+          game_ctx.fillStyle = "rgb(50, 50, 50)";
           game_ctx.fillRect(i * (game.width / numRays), 0, game.width / numRays, (game.height - wallHeight) / 2);
 
           const shade = 255 - Math.min(255, distance * 1.5);
-          game_ctx.fillStyle = `rgb(0, ${shade/2.5}, 0)`;
+          game_ctx.fillStyle = `rgb(${shade/2.5}, ${shade/2.5}, ${shade/2.5})`;
           game_ctx.fillRect(i * (game.width / numRays), (game.height - wallHeight) / 2, game.width / numRays, wallHeight);
 
-          game_ctx.fillStyle = "rgb(0, 30, 0)";
+          game_ctx.fillStyle = "rgb(30, 30, 30)";
           game_ctx.fillRect(i * (game.width / numRays), (game.height + wallHeight) / 2, game.width / numRays, game.height - (game.height + wallHeight) / 2);
 
           break;
@@ -310,14 +310,30 @@ window.addEventListener("keyup", (e) => {
 
 // Update player position based on input keys
 function updatePlayer() {
+  let nextX = player.x;
+  let nextY = player.y;
+
   if (keys["ArrowUp"]) {
-    player.x += Math.cos(player.angle) * player.speed;
-    player.y += Math.sin(player.angle) * player.speed;
+    nextX += Math.cos(player.angle) * player.speed;
+    nextY += Math.sin(player.angle) * player.speed;
   }
   if (keys["ArrowDown"]) {
-    player.x -= Math.cos(player.angle) * player.speed;
-    player.y -= Math.sin(player.angle) * player.speed;
+    nextX -= Math.cos(player.angle) * player.speed;
+    nextY -= Math.sin(player.angle) * player.speed;
   }
+
+  // Check for collisions with walls
+  const mapX = Math.floor(nextX / cellSize);
+  const mapY = Math.floor(nextY / cellSize);
+
+  if (mapX >= 0 && mapX < levelX && mapY >= 0 && mapY < levelY) {
+    if (level[mapY * levelX + mapX] === 0) {
+      // Only update position if there's no wall
+      player.x = nextX;
+      player.y = nextY;
+    }
+  }
+
   if (keys["ArrowLeft"]) {
     player.angle -= player.turnSpeed;
   }
