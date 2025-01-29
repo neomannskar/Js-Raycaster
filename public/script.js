@@ -217,7 +217,7 @@ function render3DView() {
           const distance = Math.hypot(rayX - player.x, rayY - player.y);
           const wallHeight = (cellSize / distance) * (game.height / 2);
 
-          game_ctx.fillStyle = "rgb(50, 50, 50)";
+          game_ctx.fillStyle = "rgb(40, 40, 40)";
           game_ctx.fillRect(i * (game.width / numRays), 0, game.width / numRays, (game.height - wallHeight) / 2);
 
           const shade = 255 - Math.min(255, distance * 1.5);
